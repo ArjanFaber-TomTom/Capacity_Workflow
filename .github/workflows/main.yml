@@ -8,7 +8,7 @@ on:
 
 jobs:
   run-scripts:
-    runs-on: windows-latest  # Required for native PowerShell support
+    runs-on: [self-hosted, windows]
 
     steps:
       - name: Checkout repository
