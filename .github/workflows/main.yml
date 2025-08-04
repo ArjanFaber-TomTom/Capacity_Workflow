@@ -5,12 +5,19 @@ on:
     - cron: '0 14 * * *'
   workflow_dispatch:
 
-
 jobs:
   run-scripts:
     runs-on: [self-hosted, windows]
 
     steps:
+
+      - name: Install MSOLAP provider
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=829576" -OutFile "$env:TEMP\MSOLAP.msi"
+          Start-Process msiexec.exe -ArgumentList "/i $env:TEMP\MSOLAP.msi /quiet /norestart" -Wait
+          Remove-Item "$env:TEMP\MSOLAP.msi"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -26,8 +33,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install dependencies
         run: pip install pandas numpy openpyxl
 
       - name: Run Python script
-        run: python capacity_metric.py  
+        run: python capacity_metric.py
