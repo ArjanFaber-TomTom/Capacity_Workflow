@@ -1,7 +1,7 @@
 import pandas as pd 
 import numpy as np
 from datetime import datetime
-
+import os 
 df = pd.read_csv('output.csv')
 df.columns
 
@@ -37,4 +37,13 @@ if (len(inprogress_tickets) + len(todo_tickets)) != 0:
 else:
     proportion_todo = 0
 capacity = 0.5*proportion_todo + 0.5* overdue_severity
-print(capacity)
+
+df = pd.DataFrame({'date': [today], 'value': [capacity]})
+file_path = "./Capacity_Data.xlsx"
+if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+    with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
+    # Append below existing data, so find max_row
+        startrow = writer.sheets[writer.book.active.title].max_row
+        df.to_excel(writer, index=False, header=False, startrow=startrow)
+else:
+    df.to_excel(file_path, index=False)
