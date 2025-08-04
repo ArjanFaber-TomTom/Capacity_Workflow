@@ -1,0 +1,31 @@
+name: Daily Capacity Workflow
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # 14:00 UTC = 16:00 Amsterdam (CEST)
+
+jobs:
+  run-scripts:
+    runs-on: windows-latest  # Required for native PowerShell support
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run PowerShell script
+        run: ./script_powershell.ps1  # Update this to match the actual script name
+        shell: pwsh
+
+      - name: Wait 20 seconds
+        run: Start-Sleep -Seconds 20
+        shell: pwsh
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install pandas numpy openpyxl
+
+      - name: Run Python script
+        run: python capacity_metric.py  
