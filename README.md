@@ -1,2 +1,2 @@
 # Capacity_Workflow
-Implementing a automated workflow for storing capacity metric
+Implementing an automated workflow for storing capacity metric
