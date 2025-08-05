@@ -10,20 +10,13 @@ jobs:
     runs-on: [self-hosted, windows]
 
     steps:
-      - name: Install MSOLAP provider
+      - name: ✅ Check MSOLAP installation
         shell: powershell
         run: |
-          Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=829576" -OutFile "$env:TEMP\MSOLAP.msi"
-          Start-Process msiexec.exe -ArgumentList "/i $env:TEMP\MSOLAP.msi /quiet /norestart" -Wait
-          Remove-Item "$env:TEMP\MSOLAP.msi"
-
-      - name: Check MSOLAP installation
-        shell: powershell
-        run: |
-          if (Test-Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSOLAP") {
-            Write-Host "MSOLAP provider is installed"
+          if (Test-Path "C:\Program Files (x86)\Microsoft Analysis Services\AS OLEDB\140\msolap.dll") {
+            Write-Host "✅ MSOLAP provider is installed"
           } else {
-            Write-Host "MSOLAP provider NOT found"
+            Write-Host "❌ MSOLAP provider NOT found"
             exit 1
           }
 
