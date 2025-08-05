@@ -11,7 +11,6 @@ try {
     # Open connection
     $conn = New-Object -ComObject ADODB.Connection
     $conn.Open($connString)
-    Write-Host "Connected to cube."
 
     # DAX Query
 $daxQuery = @"
@@ -96,5 +95,6 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
