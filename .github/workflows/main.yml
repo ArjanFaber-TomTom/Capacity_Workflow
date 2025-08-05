@@ -17,6 +17,16 @@ jobs:
           Start-Process msiexec.exe -ArgumentList "/i $env:TEMP\MSOLAP.msi /quiet /norestart" -Wait
           Remove-Item "$env:TEMP\MSOLAP.msi"
 
+      - name: Check MSOLAP installation
+        shell: powershell
+        run: |
+          if (Test-Path "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSOLAP") {
+            Write-Host "MSOLAP provider is installed"
+          } else {
+            Write-Host "MSOLAP provider NOT found"
+            exit 1
+          }
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
