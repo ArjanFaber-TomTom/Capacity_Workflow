@@ -15,7 +15,6 @@ try {
     # DAX Query
 $daxQuery = @"
 EVALUATE
-$FilteredIssues =
     FILTER (
         'Issue',
         SEARCH("BATTI", 'Issue'[PKEY], 1, 0) >= 1
@@ -95,6 +94,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
