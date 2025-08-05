@@ -25,7 +25,7 @@ jobs:
 
       - name: Run PowerShell script
         run: ./script_powershell.ps1
-        shell: powershell
+        shell: cmd
 
       - name: Wait 20 seconds
         run: Start-Sleep -Seconds 20
