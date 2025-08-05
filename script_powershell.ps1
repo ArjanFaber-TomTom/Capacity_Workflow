@@ -5,13 +5,12 @@ $outputCsvPath = "output.csv"
 "
 
 # Connection string
-$connString = "Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
+$connString = 'Provider=MSOLAP;Data Source=Ams2wp-bwc20-3\DWH_PROD_TAB;Initial Catalog=JiraApiCube'
 
 try {
     # Open connection
     $conn = New-Object -ComObject ADODB.Connection
-    $conn.ConnectionString = $connString
-    $conn.Open()
+    $conn.Open($connString)
     Write-Host "Connected to cube."
 
     # DAX Query
@@ -97,4 +96,5 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
