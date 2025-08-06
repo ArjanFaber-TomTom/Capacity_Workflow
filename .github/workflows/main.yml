@@ -35,17 +35,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: pip install pandas numpy openpyxl
+
       - name: Run PowerShell script
         run:  pwsh -File ./script_powershell.ps1
         shell: cmd
 
-      - name: Wait 5 seconds
-        run: Start-Sleep -Seconds 5
-        shell: powershell
-
-
-      - name: Install dependencies
-        run: pip install pandas numpy openpyxl
-
-      - name: Run Python script
-        run: python capacity_metric.py
+     
