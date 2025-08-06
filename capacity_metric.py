@@ -11,7 +11,7 @@ if not raw_input:
     sys.exit(1)
 
 data = json.loads(raw_input)
-
+df = pd.DataFrame(data)
 df.columns
 
 # Convert the date columns (note the brackets)
@@ -56,6 +56,7 @@ if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         df.to_excel(writer, index=False, header=False, startrow=startrow)
 else:
     df.to_excel(file_path, index=False)
+
 
 
 
