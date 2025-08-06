@@ -6,7 +6,7 @@ on:
 
 jobs:
   run-scripts:
-    runs-on: windows-latest
+    runs-on: [self-hosted, windows]
 
     steps:
       - name: ✅ Check MSOLAP installation
