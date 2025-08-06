@@ -13,7 +13,7 @@ try {
     $conn.Open($connString)
 
     # DAX Query
-$daxQuery = "
+$daxQuery = @"
 EVALUATE
 VAR FilteredIssues =
     FILTER (
@@ -40,7 +40,7 @@ SELECTCOLUMNS (
     ""Component Key"", 'Issue'[First Component Key],
     ""Status Name"", RELATED('Status'[Status Name])
 )
-"
+"@
 
 
 
@@ -97,6 +97,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
