@@ -1,7 +1,7 @@
 # Parameters
 $server = "Ams2wp-bwc20-3\DWH_PROD_TAB"
 $database = "JiraApiCube"
-$outputCsvPath = "./output.csv"
+$outputCsvPath = "C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/output.csv"
 
 # Connection string
 $connString = "Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
@@ -96,6 +96,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
