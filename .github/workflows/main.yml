@@ -36,7 +36,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run PowerShell script
-        run: powershell -File ".\script_powershell.ps1"
+        run:  pwsh -File ./script_powershell.ps1
         shell: cmd
 
       - name: Wait 20 seconds
