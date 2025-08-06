@@ -1,8 +1,16 @@
-import pandas as pd 
+import sys
+import json
+import pandas as pd
 import numpy as np
 from datetime import datetime
-import os 
-df = pd.read_csv("C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/output.csv")
+
+# Read JSON from stdin
+raw_input = sys.stdin.read()
+if not raw_input:
+    print("No input received.")
+    sys.exit(1)
+
+data = json.loads(raw_input)
 
 df.columns
 
@@ -48,6 +56,7 @@ if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         df.to_excel(writer, index=False, header=False, startrow=startrow)
 else:
     df.to_excel(file_path, index=False)
+
 
 
 
