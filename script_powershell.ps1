@@ -1,7 +1,6 @@
 # Parameters
 $server = "Ams2wp-bwc20-3\DWH_PROD_TAB"
 $database = "JiraApiCube"
-$outputCsvPath = "C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/output.csv"
 
 # Connection string
 $connString = "Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
@@ -80,10 +79,13 @@ SELECTCOLUMNS (
             $rs.MoveNext()
         }
 
-        # Export results to CSV (with UTF8 BOM for Excel compatibility)
-       $results | Export-Csv -Path $outputCsvPath -NoTypeInformation -Encoding UTF8
-        Write-Host "Exported results to CSV: $outputCsvPath"
-        Write-Host " Total rows exported: $($results.Count)"
+        # Convert to JSON and send to Python
+        $json = $results | ConvertTo-Json -Depth 5
+    $pythonExe = "python"  # or full path like "C:\Python39\python.exe"
+    $scriptPath = "./capacity_metric.py"
+
+# Call Python and pipe JSON
+$json | & $pythonExe $scriptPath
     }
     else {
         Write-Host " Query returned no rows or recordset is closed."
@@ -96,6 +98,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
