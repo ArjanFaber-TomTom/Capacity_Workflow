@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import os 
-df = pd.read_csv("C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts/output.csv")
+df = pd.read_csv("C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/output.csv")
 
 df.columns
 
@@ -48,6 +48,7 @@ if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         df.to_excel(writer, index=False, header=False, startrow=startrow)
 else:
     df.to_excel(file_path, index=False)
+
 
 
 
