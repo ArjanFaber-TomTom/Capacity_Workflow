@@ -15,7 +15,12 @@ try {
     # DAX Query
 $daxQuery = @"
 EVALUATE
-    FILTER ('Issue',SEARCH("BATTI", 'Issue'[PKEY], 1, 0) >= 1 && 'Issue'[Date Created] > DATE(2024, 12, 31))
+VAR FilteredIssues =
+    FILTER (
+        'Issue',
+        SEARCH("BATTI", 'Issue'[PKEY], 1, 0) >= 1
+            && 'Issue'[Date Created] > DATE(2024, 12, 31)
+    )
 RETURN
 SELECTCOLUMNS (
     FilteredIssues,"PKEY", 'Issue'[PKEY],"Summary", 'Issue'[issue Summary],"Assignee Key", 'Issue'[Assignee Key],"Date Updated", 'Issue'[Date Updated],
@@ -77,6 +82,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
