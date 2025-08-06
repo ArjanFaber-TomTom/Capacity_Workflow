@@ -13,34 +13,36 @@ try {
     $conn.Open($connString)
 
     # DAX Query
-$daxQuery = @(
-    "EVALUATE",
-    "VAR FilteredIssues =",
-    "    FILTER (",
-    "        'Issue',",
-    "        SEARCH(""BATTI"", 'Issue'[PKEY], 1, 0) >= 1 &&",
-    "        'Issue'[Date Created] > DATE(2024, 12, 31)",
-    "    )",
-    "RETURN",
-    "SELECTCOLUMNS (",
-    "    FilteredIssues,",
-    "    ""PKEY"", 'Issue'[PKEY],",
-    "    ""Summary"", 'Issue'[issue Summary],",
-    "    ""Assignee Key"", 'Issue'[Assignee Key],",
-    "    ""Date Updated"", 'Issue'[Date Updated],",
-    "    ""Date Created"", 'Issue'[Date Created],",
-    "    ""Date Due"", 'Issue'[Date Due],",
-    "    ""Issue URL"", 'Issue'[Issue URL],",
-    "    ""Priority"", 'Issue'[PRIORITY],",
-    "    ""Reporter Key"", 'Issue'[Reporter Key],",
-    "    ""Issue Status"", 'Issue'[ISSUESTATUS],",
-    "    ""Type"", 'Issue'[ISSUETYPE],",
-    "    ""Resolution"", 'Issue'[RESOLUTION],",
-    "    ""First Response Time (Hours)"", 'Issue'[First Response Time(in Hours)],",
-    "    ""Component Key"", 'Issue'[First Component Key],",
-    "    ""Status Name"", RELATED('Status'[Status Name])",
-    ")"
-) -join "`n"
+$daxQuery = "
+EVALUATE
+VAR FilteredIssues =
+    FILTER (
+        'Issue',
+        SEARCH(""BATTI"", 'Issue'[PKEY], 1, 0) >= 1 &&
+        'Issue'[Date Created] > DATE(2024, 12, 31)
+    )
+RETURN
+SELECTCOLUMNS (
+    FilteredIssues,
+    ""PKEY"", 'Issue'[PKEY],
+    ""Summary"", 'Issue'[issue Summary],
+    ""Assignee Key"", 'Issue'[Assignee Key],
+    ""Date Updated"", 'Issue'[Date Updated],
+    ""Date Created"", 'Issue'[Date Created],
+    ""Date Due"", 'Issue'[Date Due],
+    ""Issue URL"", 'Issue'[Issue URL],
+    ""Priority"", 'Issue'[PRIORITY],
+    ""Reporter Key"", 'Issue'[Reporter Key],
+    ""Issue Status"", 'Issue'[ISSUESTATUS],
+    ""Type"", 'Issue'[ISSUETYPE],
+    ""Resolution"", 'Issue'[RESOLUTION],
+    ""First Response Time (Hours)"", 'Issue'[First Response Time(in Hours)],
+    ""Component Key"", 'Issue'[First Component Key],
+    ""Status Name"", RELATED('Status'[Status Name])
+)
+"
+
+
 
 
     # Prepare command
@@ -95,6 +97,7 @@ $daxQuery = @(
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
