@@ -2,7 +2,7 @@
 $server = "Ams2wp-bwc20-3\DWH_PROD_TAB"
 $database = "JiraApiCube"
 $outputCsvPath = "output.csv"
-"
+
 
 # Connection string
 $connString = 'Provider=MSOLAP;Data Source=Ams2wp-bwc20-3\DWH_PROD_TAB;Initial Catalog=JiraApiCube'
@@ -97,6 +97,7 @@ SELECTCOLUMNS (
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
