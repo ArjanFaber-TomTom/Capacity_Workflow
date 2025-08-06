@@ -40,7 +40,7 @@ else:
 capacity = 0.5*proportion_todo + 0.5* overdue_severity
 
 df = pd.DataFrame({'date': [today], 'value': [capacity]})
-file_path = "C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts/store_capacity.xlsx"
+file_path = "C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/store_capacity.xlsx"
 if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
     with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
     # Append below existing data, so find max_row
@@ -48,6 +48,7 @@ if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         df.to_excel(writer, index=False, header=False, startrow=startrow)
 else:
     df.to_excel(file_path, index=False)
+
 
 
 
