@@ -39,8 +39,8 @@ jobs:
         run:  pwsh -File ./script_powershell.ps1
         shell: cmd
 
-      - name: Wait 20 seconds
-        run: Start-Sleep -Seconds 20
+      - name: Wait 5 seconds
+        run: Start-Sleep -Seconds 5
         shell: powershell
 
 
