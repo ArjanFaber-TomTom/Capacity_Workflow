@@ -31,10 +31,11 @@ jobs:
           } else {
             Write-Host "MSOLAP provider already registered."
           }
-      - name: Checkout repo without deleting existing files
+      - name: Checkout repo without cleaning
         uses: actions/checkout@v4
         with:
-          clean: false
+          path: repo     # Put repo in its own subfolder
+          clean: false   # Don't delete pre-existing files
 
 
       - name: Install dependencies
