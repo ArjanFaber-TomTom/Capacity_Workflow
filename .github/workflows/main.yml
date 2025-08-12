@@ -32,9 +32,6 @@ jobs:
             Write-Host "MSOLAP provider already registered."
           }
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Install dependencies
         run: pip install pandas numpy openpyxl
 
