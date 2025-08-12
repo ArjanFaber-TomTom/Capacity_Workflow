@@ -3,6 +3,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
+import psycopg2
 from datetime import datetime
 
 # Read JSON from stdin
@@ -49,14 +50,48 @@ else:
 capacity = 0.5*proportion_todo + 0.5* overdue_severity
 
 df = pd.DataFrame({'date': [today], 'value': [capacity]})
-file_path = "C:/Users/fabera/OneDrive - TomTom/Desktop/Scripts_Git/store_capacity.xlsx"
-if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
-    with pd.ExcelWriter(file_path, engine='openpyxl', mode='a', if_sheet_exists='overlay') as writer:
-    # Append below existing data, so find max_row
-        startrow = writer.sheets[writer.book.active.title].max_row
-        df.to_excel(writer, index=False, header=False, startrow=startrow)
-else:
-    df.to_excel(file_path, index=False)
+
+pw = "'9GV~NGU3uUZL8v"
+
+try:
+    conn = psycopg2.connect(
+        dbname="tti_database",
+        user="YE2137_user_tti_quality",
+        password=pw, 
+        host="tti-biba-db.postgres.database.azure.com",
+        port=5432,
+        sslmode="require"
+    )
+    print("Connection successful!")
+
+    cur = conn.cursor()
+
+    # Prepare data to insert
+    current_date = today 
+    value =  capacity
+
+    # SQL insert statement
+    insert_query = """
+        INSERT INTO ba.capacity_metric (date_column, value_column)
+        VALUES (%s, %s)
+    """
+
+    # Row data to insert
+    row_to_insert = (current_date, value)
+
+    try:
+        cur.execute(insert_query, row_to_insert)
+        conn.commit()
+        print("Row inserted successfully!")
+    except Exception as e:
+        print("Error inserting row:", e)
+        conn.rollback()
+
+    cur.close()
+    conn.close()
+
+except Exception as e:
+    print("Connection failed:", e)
 
 
 
