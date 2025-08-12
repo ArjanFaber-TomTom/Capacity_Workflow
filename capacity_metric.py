@@ -68,7 +68,7 @@ try:
 
     # Prepare data to insert
     current_date = today 
-    value =  capacity
+    value =  round(capacity, 2)
 
     # SQL insert statement
     insert_query = """
@@ -92,6 +92,7 @@ try:
 
 except Exception as e:
     print("Connection failed:", e)
+
 
 
 
