@@ -72,7 +72,7 @@ try:
 
     # SQL insert statement
     insert_query = """
-        INSERT INTO ba.capacity_metric (date_column, value_column)
+        INSERT INTO ba.capacity_metric (date, capacity)
         VALUES (%s, %s)
     """
 
@@ -92,6 +92,7 @@ try:
 
 except Exception as e:
     print("Connection failed:", e)
+
 
 
 
