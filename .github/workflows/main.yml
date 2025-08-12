@@ -33,11 +33,7 @@ jobs:
           }
       - name: Checkout repo without cleaning
         uses: actions/checkout@v4
-        with:
-          path: repo     # Put repo in its own subfolder
-          clean: false   # Don't delete pre-existing files
-
-
+      
       - name: Install dependencies
         run: pip install pandas numpy openpyxl
 
