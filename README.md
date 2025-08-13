@@ -10,17 +10,8 @@ A. Configure a self-hosted runner on a local Windows machine e.g. "C:\Users\fabe
 B. Configure the Windows scheduler (.bat file) by adjusting the path to the Github self-hosted runner (in default case it is "C:\Users\fabera\Self-Hosted_Runner\run.cmd" ) . 
 
 How to schedule it with Windows Task Scheduler? 
-1. Press Win + R, type taskschd.msc, and hit Enter.
+1. Press Win + R, type shell:startup, and hit Enter.
 
-2. Click Create Basic Task or Create Task.
+2. add scheduler.bat file here
 
-3. Give it a name like “Start GitHub Runner”.
-
-4. Choose a trigger (e.g., at system startup, daily at 8 AM, etc.).
-
-5. For the action, select Start a program.
-
-6. Browse to the .bat file or type its full path, e.g.
-
-"C:\path\to\scheduler.bat"
 
