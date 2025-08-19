@@ -1,8 +1,13 @@
+# Force 64-bit PowerShell
+if ([Environment]::Is64BitProcess -eq $false) {
+    Write-Output "This script must be run in 64-bit PowerShell. Exiting..."
+    exit 1
+}
+
 # Paths and URLs
 $installerName = "msoledbsql.msi"
 $installerUrl  = "https://go.microsoft.com/fwlink/?linkid=2318101" # Official MS download link
 $installerPath = Join-Path $env:TEMP $installerName
-$logPath       = Join-Path $env:TEMP "msoledbsql_install.log"
 
 # Function to install Visual C++ Redistributables (x64 and x86)
 function Install-VCRedist {
@@ -11,8 +16,12 @@ function Install-VCRedist {
     $vcredistX64 = "$env:TEMP\vc_redist.x64.exe"
     $vcredistX86 = "$env:TEMP\vc_redist.x86.exe"
 
-    Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcredistX64 -UseBasicParsing
-    Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x86.exe" -OutFile $vcredistX86 -UseBasicParsing
+    if (-not (Test-Path $vcredistX64)) {
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcredistX64
+    }
+    if (-not (Test-Path $vcredistX86)) {
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x86.exe" -OutFile $vcredistX86
+    }
 
     Start-Process -FilePath $vcredistX64 -ArgumentList "/quiet /norestart" -Wait
     Start-Process -FilePath $vcredistX86 -ArgumentList "/quiet /norestart" -Wait
@@ -20,24 +29,24 @@ function Install-VCRedist {
     Write-Output "Visual C++ Redistributables installation complete."
 }
 
-# Always download fresh MSOLEDBSQL MSI
+# Download fresh MSOLEDBSQL MSI
 Write-Output "Downloading fresh MSOLEDBSQL installer..."
-Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath -UseBasicParsing
+Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
 Unblock-File -Path $installerPath
 
 # Install VC++ Redistributables first
 Install-VCRedist
 
-# Silent install MSOLEDBSQL with logging
+# Install MSOLEDBSQL silently
 Write-Output "Starting silent installation of OLE DB driver..."
-$arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL /L*V `"$logPath`""
+$arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
 $process = Start-Process -FilePath "msiexec.exe" -ArgumentList $arguments -Wait -PassThru
 
 switch ($process.ExitCode) {
     0 { Write-Output "Installation completed successfully." }
     3010 { Write-Output "Installation successful, but a reboot is required." }
     default { 
-        Write-Error "Installation failed with exit code $($process.ExitCode). See log at $logPath"
+        Write-Error "Installation failed with exit code $($process.ExitCode)"
         exit $process.ExitCode
     }
 }
@@ -45,8 +54,9 @@ switch ($process.ExitCode) {
 # Verify installation in registry
 Write-Output "Verifying OLE DB provider in the registry..."
 $registryPaths = @(
-    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit
-    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL"  # 32-bit
+    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit legacy path
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",  # 32-bit legacy path
+    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSOLEDBSQL"  # new path
 )
 
 $installed = $false
@@ -59,12 +69,11 @@ foreach ($path in $registryPaths) {
 }
 
 if (-not $installed) {
-    Write-Error "MSOLEDBSQL provider not found in registry. Installation may have failed. Check log: $logPath"
+    Write-Error "MSOLEDBSQL provider not found in registry. Installation may have failed. Check MSI log at $env:TEMP\msoledbsql_install.log"
     exit 1
 } else {
     Write-Output "MSOLEDBSQL provider installation verified."
 }
 
 Write-Output "OLE DB driver installation script completed."
-
 
