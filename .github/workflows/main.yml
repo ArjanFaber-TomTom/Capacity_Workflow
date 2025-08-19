@@ -10,27 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: ✅ Check MSOLAP installation
-        shell: powershell
-        run: |
-          if (Test-Path "C:\Program Files (x86)\Microsoft Analysis Services\AS OLEDB\140\msolap.dll") {
-            Write-Host "✅ MSOLAP provider is installed"
-          } else {
-            Write-Host "❌ MSOLAP provider NOT found"
-            exit 1
-          }
-
-      - name: Register MSOLAP DLL if not registered
-        shell: powershell
-        run: |
-          $dllPath = "C:\Program Files (x86)\Microsoft Analysis Services\AS OLEDB\140\msolap.dll"
-          $providerKey = "HKCR:\MSOLAP"
-          if (-not (Test-Path $providerKey)) {
-            Write-Host "MSOLAP provider not registered, registering now..."
-            Start-Process -FilePath regsvr32.exe -ArgumentList "/s `"$dllPath`"" -Wait
-          } else {
-            Write-Host "MSOLAP provider already registered."
-          }
+  
       - name: Checkout repo without cleaning
         uses: actions/checkout@v4
 
