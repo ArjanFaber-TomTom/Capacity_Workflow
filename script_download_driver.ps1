@@ -35,7 +35,6 @@ Install-VCRedist
 # Uninstall any existing OLE DB drivers (optional)
 Write-Output "Checking for existing OLE DB drivers to uninstall..."
 $existingDrivers = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*OLE DB*" }
-
 foreach ($driver in $existingDrivers) {
     Write-Output "Uninstalling $($driver.Name)..."
     $driver.Uninstall() | Out-Null
@@ -44,7 +43,6 @@ foreach ($driver in $existingDrivers) {
 # Install MSI silently with license acceptance
 Write-Output "Starting silent installation of OLE DB driver..."
 $arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
-
 $process = Start-Process -FilePath "msiexec.exe" `
     -ArgumentList $arguments `
     -Wait -PassThru
@@ -52,7 +50,7 @@ $process = Start-Process -FilePath "msiexec.exe" `
 # Check exit code
 switch ($process.ExitCode) {
     0 { Write-Output "Installation completed successfully." }
-    3010 { Write-Output "Installation successful, but a reboot is required." }
+    3010 { Write-Output "Installation successful, but a reboot is required (cannot reboot on hosted runner)." }
     default { 
         Write-Error "Installation failed with exit code $($process.ExitCode)"
         exit $process.ExitCode
@@ -71,30 +69,16 @@ foreach ($path in $registryPaths) {
     if (Test-Path $path) {
         Write-Output "MSOLEDBSQL found at $path"
         $installed = $true
+        break
     }
 }
 
 if (-not $installed) {
-    Write-Warning "MSOLEDBSQL provider not found in registry. Installation may have failed."
+    Write-Error "MSOLEDBSQL provider not found in registry. Installation may have failed."
+    exit 1
 } else {
-    Write-Output "MSOLEDBSQL provider installation verified in registry."
-}
-
-# Optional: double-check via ADODB provider enumeration
-Write-Output "Verifying OLE DB provider via ADODB..."
-try {
-    $connection = New-Object -ComObject ADODB.Connection
-    $providers = $connection.Provider
-    if ($providers -match "MSOLEDBSQL") {
-        Write-Output "MSOLEDBSQL provider is available via ADODB."
-    } else {
-        Write-Warning "MSOLEDBSQL provider not found in ADODB list."
-    }
-} catch {
-    Write-Warning "Could not enumerate ADODB providers. Driver might not be installed correctly."
+    Write-Output "MSOLEDBSQL provider installation verified."
 }
 
 Write-Output "OLE DB driver installation script completed."
-
-
 
