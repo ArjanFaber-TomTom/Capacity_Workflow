@@ -32,14 +32,6 @@ if (-Not (Test-Path $installerPath)) {
 # Install VC++ Redistributables first
 Install-VCRedist
 
-# Uninstall any existing OLE DB drivers (optional)
-Write-Output "Checking for existing OLE DB drivers to uninstall..."
-$existingDrivers = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*OLE DB*" }
-foreach ($driver in $existingDrivers) {
-    Write-Output "Uninstalling $($driver.Name)..."
-    $driver.Uninstall() | Out-Null
-}
-
 # Install MSI silently with license acceptance
 Write-Output "Starting silent installation of OLE DB driver..."
 $arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
@@ -81,4 +73,5 @@ if (-not $installed) {
 }
 
 Write-Output "OLE DB driver installation script completed."
+
 
