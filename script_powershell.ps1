@@ -3,7 +3,7 @@ $server = "Ams2wp-bwc20-3\DWH_PROD_TAB"
 $database = "JiraApiCube"
 
 # Connection string
-$connString = "Provider=Provider=MSOLAP.7;Data Source=$server;Initial Catalog=$database;"
+$connString = "Provider=Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
 
 try {
     # Open connection
@@ -98,6 +98,7 @@ $json | & $pythonExe $scriptPath
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
+
 
 
 
