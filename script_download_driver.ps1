@@ -1,11 +1,36 @@
 # Path to your MSI
 $installerPath = ".\msoledbsql.msi"
 
-# Check if the file exists
+# Function to install Visual C++ Redistributables (x64 and x86)
+function Install-VCRedist {
+    Write-Output "Ensuring Microsoft Visual C++ Redistributables are installed..."
+    
+    $vcredistX64 = "$env:TEMP\vc_redist.x64.exe"
+    $vcredistX86 = "$env:TEMP\vc_redist.x86.exe"
+
+    # Download VC++ redistributables if not already present
+    if (-not (Test-Path $vcredistX64)) {
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcredistX64
+    }
+    if (-not (Test-Path $vcredistX86)) {
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x86.exe" -OutFile $vcredistX86
+    }
+
+    # Silent install VC++ redistributables
+    Start-Process -FilePath $vcredistX64 -ArgumentList "/quiet /norestart" -Wait
+    Start-Process -FilePath $vcredistX86 -ArgumentList "/quiet /norestart" -Wait
+
+    Write-Output "Visual C++ Redistributables installation complete."
+}
+
+# Check if MSI exists
 if (-Not (Test-Path $installerPath)) {
     Write-Error "Installer not found at $installerPath"
     exit 1
 }
+
+# Install VC++ Redistributables first
+Install-VCRedist
 
 # Uninstall any existing OLE DB drivers (optional)
 Write-Output "Checking for existing OLE DB drivers to uninstall..."
@@ -16,9 +41,8 @@ foreach ($driver in $existingDrivers) {
     $driver.Uninstall() | Out-Null
 }
 
-Write-Output "Starting silent installation of OLE DB driver..."
-
 # Install MSI silently with license acceptance
+Write-Output "Starting silent installation of OLE DB driver..."
 $arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
 
 $process = Start-Process -FilePath "msiexec.exe" `
@@ -35,17 +59,14 @@ switch ($process.ExitCode) {
     }
 }
 
-
-# Verify installation by checking the registry for MSOLEDBSQL
+# Verify installation in the registry
 Write-Output "Verifying OLE DB provider in the registry..."
-
 $registryPaths = @(
     "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit
     "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL"  # 32-bit
 )
 
 $installed = $false
-
 foreach ($path in $registryPaths) {
     if (Test-Path $path) {
         Write-Output "MSOLEDBSQL found at $path"
@@ -56,10 +77,11 @@ foreach ($path in $registryPaths) {
 if (-not $installed) {
     Write-Warning "MSOLEDBSQL provider not found in registry. Installation may have failed."
 } else {
-    Write-Output "MSOLEDBSQL provider installation verified."
+    Write-Output "MSOLEDBSQL provider installation verified in registry."
 }
 
 # Optional: double-check via ADODB provider enumeration
+Write-Output "Verifying OLE DB provider via ADODB..."
 try {
     $connection = New-Object -ComObject ADODB.Connection
     $providers = $connection.Provider
@@ -69,7 +91,10 @@ try {
         Write-Warning "MSOLEDBSQL provider not found in ADODB list."
     }
 } catch {
-    Write-Warning "Could not enumerate ADODB providers."
+    Write-Warning "Could not enumerate ADODB providers. Driver might not be installed correctly."
 }
+
+Write-Output "OLE DB driver installation script completed."
+
 
 
