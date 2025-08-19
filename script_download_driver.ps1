@@ -7,36 +7,38 @@ if (-Not (Test-Path $installerPath)) {
     exit 1
 }
 
-# Uninstall any existing OLE DB drivers
+# Uninstall any existing OLE DB drivers (optional)
 Write-Output "Checking for existing OLE DB drivers to uninstall..."
 $existingDrivers = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*OLE DB*" }
 
 foreach ($driver in $existingDrivers) {
     Write-Output "Uninstalling $($driver.Name)..."
-    $driver.Uninstall()
+    $driver.Uninstall() | Out-Null
 }
 
-Write-Output "Starting installation of OLE DB driver..."
+Write-Output "Starting silent installation of OLE DB driver..."
 
-# Install MSI silently
+# Install MSI silently with license acceptance
+$arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
+
 $process = Start-Process -FilePath "msiexec.exe" `
-    -ArgumentList "/i `"$installerPath`" /quiet /norestart" `
+    -ArgumentList $arguments `
     -Wait -PassThru
 
 # Check exit code
-if ($process.ExitCode -eq 0) {
-    Write-Output "Installation completed successfully."
-} elseif ($process.ExitCode -eq 3010) {
-    Write-Output "Installation successful, but a reboot is required."
-} else {
-    Write-Error "Installation failed with exit code $($process.ExitCode)"
-    exit $process.ExitCode
+switch ($process.ExitCode) {
+    0 { Write-Output "Installation completed successfully." }
+    3010 { Write-Output "Installation successful, but a reboot is required." }
+    default { 
+        Write-Error "Installation failed with exit code $($process.ExitCode)"
+        exit $process.ExitCode
+    }
 }
 
 # Verify installation by checking OLE DB providers
 Write-Output "Verifying OLE DB provider..."
-$connection = New-Object -ComObject ADODB.Connection
 try {
+    $connection = New-Object -ComObject ADODB.Connection
     $providers = $connection.Provider
     if ($providers -match "MSOLEDBSQL") {
         Write-Output "MSOLEDBSQL provider is installed and available."
