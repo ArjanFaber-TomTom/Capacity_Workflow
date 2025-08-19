@@ -14,10 +14,6 @@ jobs:
       - name: Checkout repo without cleaning
         uses: actions/checkout@v4
 
-
-      - name: Install SQL driver
-        run : pwsh -File ./script_download_driver.ps1    
-        
       - name: Install dependencies
         run: pip install pandas numpy openpyxl
 
