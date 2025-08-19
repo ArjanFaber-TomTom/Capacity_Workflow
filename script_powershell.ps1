@@ -5,15 +5,38 @@ $database = "JiraApiCube"
 # Connection string
 $connString = "Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
 
+# Function to test connection
+function Test-CubeConnection {
+    param($connString)
+
+    try {
+        $testConn = New-Object -ComObject ADODB.Connection
+        $testConn.ConnectionString = $connString
+        $testConn.Open()
+        Write-Host " Connection test successful."
+        $testConn.Close()
+        return $true
+    } catch {
+        Write-Host "Connection test failed: $($_.Exception.Message)"
+        return $false
+    }
+}
+
+# Test the connection first
+if (-not (Test-CubeConnection -connString $connString)) {
+    Write-Host "Aborting script because connection could not be established."
+    exit 1
+}
+
+# If connection works, proceed with query
 try {
-    # Open connection
     $conn = New-Object -ComObject ADODB.Connection
     $conn.ConnectionString = $connString
     $conn.Open()
     Write-Host "Connected to cube."
 
     # DAX Query
-$daxQuery = @"
+    $daxQuery = @"
 EVALUATE
 VAR FilteredIssues =
     FILTER (
@@ -40,7 +63,6 @@ SELECTCOLUMNS (
     "Component Key", 'Issue'[First Component Key],
     "Status Name", RELATED('Status'[Status Name])
 )
-
 "@
 
     # Prepare command
@@ -53,54 +75,37 @@ SELECTCOLUMNS (
     # Execute query
     $rs = $cmd.Execute()
 
-    # Create an array to hold output objects
     $results = @()
-
     if ($rs -and -not $rs.EOF) {
-        # Get column names
         $columns = @()
         for ($i = 0; $i -lt $rs.Fields.Count; $i++) {
             $columns += $rs.Fields.Item($i).Name
         }
 
-        # Read rows into objects
         while (-not $rs.EOF) {
             $obj = @{}
             for ($i = 0; $i -lt $rs.Fields.Count; $i++) {
                 $value = $rs.Fields.Item($i).Value
-                if ($null -eq $value) {
-                    $obj[$columns[$i]] = ""
-                }
-                else {
-                    $obj[$columns[$i]] = $value
-                }
+                $obj[$columns[$i]] = if ($null -eq $value) { "" } else { $value }
             }
             $results += [PSCustomObject]$obj
             $rs.MoveNext()
         }
 
-        # Convert to JSON and send to Python
         $json = $results | ConvertTo-Json -Depth 5
-    $pythonExe = "python"  # or full path like "C:\Python39\python.exe"
-    $scriptPath = "./capacity_metric.py"
-
-# Call Python and pipe JSON
-$json | & $pythonExe $scriptPath
-    }
-    else {
-        Write-Host " Query returned no rows or recordset is closed."
+        $pythonExe = "python"
+        $scriptPath = "./capacity_metric.py"
+        $json | & $pythonExe $scriptPath
+    } else {
+        Write-Host "Query returned no rows or recordset is closed."
     }
 
-    # Clean up
     $rs.Close()
     $conn.Close()
 
 } catch {
     Write-Host "Connection or query failed: $($_.Exception.Message)"
 }
-
-
-
 
 
 
