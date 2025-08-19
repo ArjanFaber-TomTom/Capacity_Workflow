@@ -1,6 +1,6 @@
 # Paths and URLs
 $installerName = "msoledbsql.msi"
-$installerUrl  = "https://aka.ms/msoledbsql.msi" # Official MS download link
+$installerUrl  = "https://go.microsoft.com/fwlink/?linkid=2318101" # Official MS download link
 $installerPath = Join-Path $env:TEMP $installerName
 
 # Function to install Visual C++ Redistributables (x64 and x86)
@@ -71,4 +71,5 @@ if (-not $installed) {
 }
 
 Write-Output "OLE DB driver installation script completed."
+
 
