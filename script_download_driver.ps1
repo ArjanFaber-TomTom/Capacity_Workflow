@@ -1,5 +1,5 @@
 # Path to your MSI
-$installerPath = "C:\Users\fabera\Downloads\x64_17.0.861.0_SQL_AS_OLEDB.msi"
+$installerPath = ".x64_17.0.861.0_SQL_AS_OLEDB.msi"
 
 # Check if the file exists
 if (-Not (Test-Path $installerPath)) {
@@ -46,3 +46,4 @@ try {
 } catch {
     Write-Warning "Could not enumerate ADODB providers. The driver might not be installed correctly."
 }
+
