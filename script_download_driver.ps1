@@ -1,5 +1,7 @@
-# Path to your MSI
-$installerPath = ".\msoledbsql.msi"
+# Paths and URLs
+$installerName = "msoledbsql.msi"
+$installerUrl  = "https://aka.ms/msoledbsql.msi" # Official MS download link
+$installerPath = Join-Path $env:TEMP $installerName
 
 # Function to install Visual C++ Redistributables (x64 and x86)
 function Install-VCRedist {
@@ -8,7 +10,6 @@ function Install-VCRedist {
     $vcredistX64 = "$env:TEMP\vc_redist.x64.exe"
     $vcredistX86 = "$env:TEMP\vc_redist.x86.exe"
 
-    # Download VC++ redistributables if not already present
     if (-not (Test-Path $vcredistX64)) {
         Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcredistX64
     }
@@ -16,30 +17,27 @@ function Install-VCRedist {
         Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x86.exe" -OutFile $vcredistX86
     }
 
-    # Silent install VC++ redistributables
     Start-Process -FilePath $vcredistX64 -ArgumentList "/quiet /norestart" -Wait
     Start-Process -FilePath $vcredistX86 -ArgumentList "/quiet /norestart" -Wait
 
     Write-Output "Visual C++ Redistributables installation complete."
 }
 
-# Check if MSI exists
-if (-Not (Test-Path $installerPath)) {
-    Write-Error "Installer not found at $installerPath"
-    exit 1
+# Download MSOLEDBSQL MSI if missing
+if (-not (Test-Path $installerPath)) {
+    Write-Output "Downloading MSOLEDBSQL installer..."
+    Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+    Unblock-File -Path $installerPath
 }
 
 # Install VC++ Redistributables first
 Install-VCRedist
 
-# Install MSI silently with license acceptance
+# Install MSOLEDBSQL silently
 Write-Output "Starting silent installation of OLE DB driver..."
 $arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
-$process = Start-Process -FilePath "msiexec.exe" `
-    -ArgumentList $arguments `
-    -Wait -PassThru
+$process = Start-Process -FilePath "msiexec.exe" -ArgumentList $arguments -Wait -PassThru
 
-# Check exit code
 switch ($process.ExitCode) {
     0 { Write-Output "Installation completed successfully." }
     3010 { Write-Output "Installation successful, but a reboot is required (cannot reboot on hosted runner)." }
@@ -49,7 +47,7 @@ switch ($process.ExitCode) {
     }
 }
 
-# Verify installation in the registry
+# Verify installation in registry
 Write-Output "Verifying OLE DB provider in the registry..."
 $registryPaths = @(
     "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit
@@ -73,5 +71,4 @@ if (-not $installed) {
 }
 
 Write-Output "OLE DB driver installation script completed."
-
 
