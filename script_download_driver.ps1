@@ -1,79 +1,32 @@
-# Force 64-bit PowerShell
-if ([Environment]::Is64BitProcess -eq $false) {
-    Write-Output "This script must be run in 64-bit PowerShell. Exiting..."
-    exit 1
-}
+$ErrorActionPreference = "Stop"
 
-# Paths and URLs
-$installerName = "msoledbsql.msi"
-$installerUrl  = "https://go.microsoft.com/fwlink/?linkid=2318101" # Official MS download link
+# Define paths and URLs
+$installerUrl = "https://go.microsoft.com/fwlink/?linkid=829576"
+$installerName = "x64_17.0.221.0_SQL_AS_OLEDB.msi"
 $installerPath = Join-Path $env:TEMP $installerName
+$logFile = Join-Path $env:TEMP "msolap_install.log"
 
-# Function to install Visual C++ Redistributables (x64 and x86)
-function Install-VCRedist {
-    Write-Output "Ensuring Microsoft Visual C++ Redistributables are installed..."
-    
-    $vcredistX64 = "$env:TEMP\vc_redist.x64.exe"
-    $vcredistX86 = "$env:TEMP\vc_redist.x86.exe"
-
-    if (-not (Test-Path $vcredistX64)) {
-        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x64.exe" -OutFile $vcredistX64
-    }
-    if (-not (Test-Path $vcredistX86)) {
-        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vc_redist.x86.exe" -OutFile $vcredistX86
-    }
-
-    Start-Process -FilePath $vcredistX64 -ArgumentList "/quiet /norestart" -Wait
-    Start-Process -FilePath $vcredistX86 -ArgumentList "/quiet /norestart" -Wait
-
-    Write-Output "Visual C++ Redistributables installation complete."
+# Download the installer if it doesn't exist
+if (-not (Test-Path $installerPath)) {
+    Write-Output "Downloading MSOLAP installer..."
+    Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
+    Unblock-File -Path $installerPath
 }
 
-# Download fresh MSOLEDBSQL MSI
-Write-Output "Downloading fresh MSOLEDBSQL installer..."
-Invoke-WebRequest -Uri $installerUrl -OutFile $installerPath
-Unblock-File -Path $installerPath
+# Install MSOLAP silently
+Write-Output "Installing MSOLAP provider..."
+Start-Process -FilePath "msiexec.exe" -ArgumentList "/i `"$installerPath`" /qn /norestart /log `"$logFile`"" -Wait -PassThru
 
-# Install VC++ Redistributables first
-Install-VCRedist
-
-# Install MSOLEDBSQL silently
-Write-Output "Starting silent installation of OLE DB driver..."
-$arguments = "/i `"$installerPath`" /qn /norestart IACCEPTMSOLEDBSQLLICENSETERMS=YES ADDLOCAL=ALL"
-$process = Start-Process -FilePath "msiexec.exe" -ArgumentList $arguments -Wait -PassThru
-
-switch ($process.ExitCode) {
-    0 { Write-Output "Installation completed successfully." }
-    3010 { Write-Output "Installation successful, but a reboot is required." }
-    default { 
-        Write-Error "Installation failed with exit code $($process.ExitCode)"
-        exit $process.ExitCode
-    }
-}
-
-# Verify installation in registry
-Write-Output "Verifying OLE DB provider in the registry..."
-$registryPaths = @(
-    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit legacy path
-    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",  # 32-bit legacy path
-    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSOLEDBSQL"  # new path
-)
-
-$installed = $false
-foreach ($path in $registryPaths) {
-    if (Test-Path $path) {
-        Write-Output "MSOLEDBSQL found at $path"
-        $installed = $true
-        break
-    }
-}
-
-if (-not $installed) {
-    Write-Error "MSOLEDBSQL provider not found in registry. Installation may have failed. Check MSI log at $env:TEMP\msoledbsql_install.log"
-    exit 1
+# Verify installation by checking the registry
+$registryPath = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\MSOLEDBSQL"
+if (Test-Path $registryPath) {
+    Write-Output "MSOLAP provider installed successfully."
 } else {
-    Write-Output "MSOLEDBSQL provider installation verified."
+    Write-Error "MSOLAP provider not found in registry. Installation may have failed."
+    exit 1
 }
+
 
 Write-Output "OLE DB driver installation script completed."
+
 
