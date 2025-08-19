@@ -35,19 +35,41 @@ switch ($process.ExitCode) {
     }
 }
 
-# Verify installation by checking OLE DB providers
-Write-Output "Verifying OLE DB provider..."
+
+# Verify installation by checking the registry for MSOLEDBSQL
+Write-Output "Verifying OLE DB provider in the registry..."
+
+$registryPaths = @(
+    "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL",          # 64-bit
+    "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Microsoft SQL Server\Client OLE DB\MSOLEDBSQL"  # 32-bit
+)
+
+$installed = $false
+
+foreach ($path in $registryPaths) {
+    if (Test-Path $path) {
+        Write-Output "MSOLEDBSQL found at $path"
+        $installed = $true
+    }
+}
+
+if (-not $installed) {
+    Write-Warning "MSOLEDBSQL provider not found in registry. Installation may have failed."
+} else {
+    Write-Output "MSOLEDBSQL provider installation verified."
+}
+
+# Optional: double-check via ADODB provider enumeration
 try {
     $connection = New-Object -ComObject ADODB.Connection
     $providers = $connection.Provider
     if ($providers -match "MSOLEDBSQL") {
-        Write-Output "MSOLEDBSQL provider is installed and available."
+        Write-Output "MSOLEDBSQL provider is available via ADODB."
     } else {
         Write-Warning "MSOLEDBSQL provider not found in ADODB list."
     }
 } catch {
-    Write-Warning "Could not enumerate ADODB providers. The driver might not be installed correctly."
+    Write-Warning "Could not enumerate ADODB providers."
 }
-
 
 
