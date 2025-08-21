@@ -16,6 +16,10 @@ jobs:
 
       - name: Install dependencies
         run: pip install pandas numpy openpyxl
+
+      - name: Install DB Drivers
+        run: pwsh -File ./script_download_driver.ps1
+        shell: cmd
         
       - name: Run PowerShell script
         run:  pwsh -File ./script_powershell.ps1
