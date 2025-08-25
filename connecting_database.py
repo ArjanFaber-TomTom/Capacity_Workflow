@@ -17,10 +17,10 @@ def test_cube_connection(url, catalog):
         provider = XMLAProvider()
         conn = provider.connect(location=url, catalog=catalog)
         conn.Disconnect()
-        print("✅ Connection test successful.")
+        print("Connection test successful.")
         return True
     except Exception as e:
-        print("❌ Connection test failed:", e)
+        print("Connection test failed:", e)
         return False
 
 # -----------------------------
@@ -36,7 +36,7 @@ if not test_cube_connection(xmla_url, catalog):
 try:
     provider = XMLAProvider()
     conn = provider.connect(location=xmla_url, catalog=catalog)
-    print("✅ Connected to cube.")
+    print(" Connected to cube.")
 
     # DAX Query
     dax_query = """
@@ -78,7 +78,7 @@ try:
     if "root" in result and "Axes" in result["root"]:
         # Depending on the XMLA response, you'd need to parse cells
         # Simplified example: show raw response
-        print("⚠️ XMLA response returned. Needs parsing based on SSAS server.")
+        print(" XMLA response returned. Needs parsing based on SSAS server.")
         print(result)
     else:
         # If result is already tabular
@@ -102,4 +102,4 @@ try:
     conn.Disconnect()
 
 except Exception as e:
-    print("❌ Connection or query failed:", e)
+    print(" Connection or query failed:", e)
