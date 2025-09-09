@@ -6,12 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: [ "az-weu-ubuntu-24.04-amd64-05cpu" ]
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.10.12']
+  run-scripts:
+    runs-on: [self-hosted, windows]
 
     steps:
   
