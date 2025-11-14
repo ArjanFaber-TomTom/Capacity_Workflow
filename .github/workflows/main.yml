@@ -7,10 +7,10 @@ on:
 
 jobs:
   build:
-   runs-on: [ "az-weu-ubuntu-22.04-amd64-05cpu" ]
+   runs-on: [ "az-weu-windows-2022-amd64-2cpu" ]
    strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [windows-latest]
         python-version: ['3.10.12']
 
    steps:
