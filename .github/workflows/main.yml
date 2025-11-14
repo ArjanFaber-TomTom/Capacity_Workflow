@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-   runs-on: [ "az-weu-windows-2022-amd64-2cpu" ]
+   runs-on: [self-hosted, windows]
    strategy:
       matrix:
         os: [windows-latest]
