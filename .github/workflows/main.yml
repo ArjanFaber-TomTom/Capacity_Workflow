@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-   runs-on: [ "az-weu-ubuntu-24.04-amd64-05cpu" ]
+   runs-on: [ "az-weu-ubuntu-24.04-amd64-05cpu-cpkqg-runner-dj8dq" ]
    strategy:
       matrix:
         os: [ubuntu-latest]
