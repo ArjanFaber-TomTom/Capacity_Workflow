@@ -1,111 +1,74 @@
-# Parameters
-$server = "Ams2wp-bwc20-3\DWH_PROD_TAB"
-$database = "JiraApiCube"
+# JIRA credentials from env variables (GitHub secrets)
+$jiraEmail = "arjan.faber@tomtom.com"
+$jiraToken = "ATATT3xFfGF0iwS-8N8B_PIwvvi7KMztGPmzlav8ECiL9NXCiYI7sULzfgTI1-yaI_Al95jrzEAqJs0tU59l2SMEU-z2Fo8dxMRYodkP7LoDMWWS-LplvdtgzzCsXtvj0-oK-J-bytrhzV3yWD8Qy3GKf3_uh4gOo9AGxe1MP62T6znTPkpiCoo=C6CB4564"
+$jiraUrl   = "https://tomtom.atlassian.net"
 
-# Connection string
-$connString = "Provider=MSOLAP;Data Source=$server;Initial Catalog=$database;"
+# JQL equivalent of your DAX filter
+$jql = 'project = BATTI AND created > "2024-12-31"'
 
-# Function to test connection
-function Test-CubeConnection {
-    param($connString)
+# Fields to fetch
+$fields = @(
+    "summary",
+    "assignee",
+    "reporter",
+    "priority",
+    "status",
+    "issuetype",
+    "resolution",
+    "duedate",
+    "created",
+    "updated",
+    "components",
+    "customfield_XXXXX" # First Response Time
+) -join ","
 
-    try {
-        $testConn = New-Object -ComObject ADODB.Connection
-        $testConn.ConnectionString = $connString
-        $testConn.Open()
-        Write-Host " Connection test successful."
-        $testConn.Close()
-        return $true
-    } catch {
-        Write-Host "Connection test failed: $($_.Exception.Message)"
-        return $false
-    }
-}
+# REST request
+$searchUrl = "$jiraUrl/rest/api/3/search?jql=$([uri]::EscapeDataString($jql))&maxResults=5000&fields=$fields"
 
-# Test the connection first
-if (-not (Test-CubeConnection -connString $connString)) {
-    Write-Host "Aborting script because connection could not be established."
-    exit 1
-}
+$bytes = [System.Text.Encoding]::ASCII.GetBytes("$jiraEmail:$jiraToken")
+$encodedCreds = [Convert]::ToBase64String($bytes)
+$headers = @{ Authorization = "Basic $encodedCreds" }
 
-# If connection works, proceed with query
-try {
-    $conn = New-Object -ComObject ADODB.Connection
-    $conn.ConnectionString = $connString
-    $conn.Open()
-    Write-Host "Connected to cube."
+Write-Host "Calling Jira API..."
 
-    # DAX Query
-    $daxQuery = @"
-EVALUATE
-VAR FilteredIssues =
-    FILTER (
-        'Issue',
-        SEARCH("BATTI", 'Issue'[PKEY], 1, 0) >= 1
-            && 'Issue'[Date Created] > DATE(2024, 12, 31)
-    )
-RETURN
-SELECTCOLUMNS (
-    FilteredIssues,
-    "PKEY", 'Issue'[PKEY],
-    "Summary", 'Issue'[issue Summary],
-    "Assignee Key", 'Issue'[Assignee Key],
-    "Date Updated", 'Issue'[Date Updated],
-    "Date Created", 'Issue'[Date Created],
-    "Date Due", 'Issue'[Date Due],
-    "Issue URL", 'Issue'[Issue URL],
-    "Priority", 'Issue'[PRIORITY],
-    "Reporter Key", 'Issue'[Reporter Key],
-    "Issue Status", 'Issue'[ISSUESTATUS],
-    "Type", 'Issue'[ISSUETYPE],
-    "Resolution", 'Issue'[RESOLUTION],
-    "First Response Time (Hours)", 'Issue'[First Response Time(in Hours)],
-    "Component Key", 'Issue'[First Component Key],
-    "Status Name", RELATED('Status'[Status Name])
-)
-"@
+$response = Invoke-RestMethod -Uri $searchUrl -Headers $headers -Method Get
 
-    # Prepare command
-    $cmd = New-Object -ComObject ADODB.Command
-    $cmd.ActiveConnection = $conn
-    $cmd.CommandText = $daxQuery
-    $cmd.CommandType = 1  # adCmdText
-    $cmd.CommandTimeout = 120
+$results = @()
 
-    # Execute query
-    $rs = $cmd.Execute()
+foreach ($issue in $response.issues) {
+    $f = $issue.fields
 
-    $results = @()
-    if ($rs -and -not $rs.EOF) {
-        $columns = @()
-        for ($i = 0; $i -lt $rs.Fields.Count; $i++) {
-            $columns += $rs.Fields.Item($i).Name
-        }
-
-        while (-not $rs.EOF) {
-            $obj = @{}
-            for ($i = 0; $i -lt $rs.Fields.Count; $i++) {
-                $value = $rs.Fields.Item($i).Value
-                $obj[$columns[$i]] = if ($null -eq $value) { "" } else { $value }
-            }
-            $results += [PSCustomObject]$obj
-            $rs.MoveNext()
-        }
-
-        $json = $results | ConvertTo-Json -Depth 5
-        $pythonExe = "python"
-        $scriptPath = "./capacity_metric.py"
-        $json | & $pythonExe $scriptPath
-    } else {
-        Write-Host "Query returned no rows or recordset is closed."
+    $obj = [PSCustomObject]@{
+        "PKEY"                        = $issue.key
+        "Summary"                    = $f.summary
+        "Assignee Key"               = $f.assignee.accountId
+        "Date Updated"               = $f.updated
+        "Date Created"               = $f.created
+        "Date Due"                   = $f.duedate
+        "Issue URL"                  = "$jiraUrl/browse/$($issue.key)"
+        "Priority"                   = $f.priority.name
+        "Reporter Key"               = $f.reporter.accountId
+        "Issue Status"               = $f.status.name
+        "Type"                       = $f.issuetype.name
+        "Resolution"                 = $f.resolution.name
+        "First Response Time (Hours)"= $f.customfield_XXXXX
+        "Component Key"              = $f.components[0].id
+        "Status Name"                = $f.status.name
     }
 
-    $rs.Close()
-    $conn.Close()
-
-} catch {
-    Write-Host "Connection or query failed: $($_.Exception.Message)"
+    $results += $obj
 }
+
+# Convert to JSON
+$json = $results | ConvertTo-Json -Depth 5
+
+# Pipe JSON to Python 
+$pythonExe = "python"
+$scriptPath = "./capacity_metric.py"
+
+Write-Host "Sending JSON to Python script..."
+$json | & $pythonExe $scriptPath
+
 
 
 
